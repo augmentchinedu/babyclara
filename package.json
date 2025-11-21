@@ -1,0 +1,15 @@
+{
+    "name": "babyclara",
+    "version": "0.0.1",
+    "description": "A Vue.Js Work Station",
+    "main": "index.js",
+    "author": "Augment Chinedu",
+    "license": "ISC",
+    "private": false,
+    "bin": {
+        "babyclara": "index.js"
+    },
+    "dependencies": {
+        "gkrane": "^3.0.1"
+    }
+}
