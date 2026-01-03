@@ -1,6 +1,6 @@
 {
     "name": "babyclara",
-    "version": "0.0.3",
+    "version": "0.0.9",
     "description": "A Vue.Js Work Station",
     "main": "index.js",
     "author": "Augment Chinedu",
@@ -13,6 +13,10 @@
         "*"
     ],
     "dependencies": {
-        "gkrane": "^3.0.1"
+        "gkrane": "^3.0.1",
+        "ws": "^8.18.3"
+    },
+    "scripts": {
+        "start": "node --watch core/index.js"
     }
 }
