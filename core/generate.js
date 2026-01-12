@@ -65,7 +65,7 @@ async function generate() {
       start: "node ./node_modules/babyclara/core/index.js",
     },
     dependencies: {
-      babyclara: "^0.0.0", // always install itself locally
+      babyclara: "latest", // always install itself locally
     },
   };
 
