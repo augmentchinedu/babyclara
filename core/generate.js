@@ -5,10 +5,6 @@ const { spawn } = require("child_process");
 
 const targetDir = process.cwd();
 
-/* -----------------------------
-   Helpers
------------------------------ */
-
 function ask(question) {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -25,8 +21,6 @@ function ask(question) {
 
 function installDeps(projectPath) {
   return new Promise((resolve, reject) => {
-    console.log("\n📦 Installing dependencies...\n");
-
     const npm = spawn("npm", ["install"], {
       cwd: projectPath,
       stdio: "inherit",
@@ -40,21 +34,14 @@ function installDeps(projectPath) {
   });
 }
 
-/* -----------------------------
-   Generate Workstation
------------------------------ */
-
 async function generate() {
-  console.log("\n✨ Welcome to BabyClara ✨\n");
+  console.log("\nWelcome to BabyClara ✨\n");
 
-  /* Step 0 — CLI initialization */
-
-  const defaultName = path.basename(targetDir) || "my-workstation";
-
+  // Step 0 — CLI init
+  const defaultName = path.basename(targetDir) || "babyclara-workstation";
   const nameInput = await ask(
     `Workstation name (default: ${defaultName}): `
   );
-
   const workstationName = nameInput || defaultName;
 
   console.log("\nChoose framework:");
@@ -68,34 +55,25 @@ async function generate() {
   if (frameworkInput === "2") framework = "react";
   if (frameworkInput === "3") framework = "vue";
 
-  /* Step 1 — Ensure package.json */
-
+  // package.json
   const pkgPath = path.join(targetDir, "package.json");
 
-  let pkg;
-  if (fs.existsSync(pkgPath)) {
-    pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-  } else {
-    pkg = {
-      name: workstationName,
-      private: true,
-      scripts: {},
-    };
-    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
-    console.log("📄 Created package.json");
-  }
-
-  /* Step 2 — Ensure start script */
-
-  pkg.scripts = pkg.scripts || {};
-  pkg.scripts.start = "node ./node_modules/babyclara/core/index.js";
+  const pkg = {
+    name: workstationName,
+    private: true,
+    scripts: {
+      start: "node ./node_modules/babyclara/core/index.js",
+    },
+    dependencies: {
+      babyclara: "^0.0.0", // always install itself locally
+    },
+  };
 
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+  console.log("✔ package.json created");
 
-  /* Step 3 — Create babyclara.config.js */
-
+  // babyclara.config.js
   const configPath = path.join(targetDir, "babyclara.config.js");
-
   if (!fs.existsSync(configPath)) {
     fs.writeFileSync(
       configPath,
@@ -109,17 +87,15 @@ module.exports = {
 };
 `
     );
-    console.log("⚙️ Created babyclara.config.js");
-  } else {
-    console.log("⚙️ babyclara.config.js already exists — skipping");
+    console.log("✔ babyclara.config.js created");
   }
 
-  /* Step 4 — Install dependencies */
-
+  // Install dependencies
+  console.log("\n📦 Installing dependencies...");
   await installDeps(targetDir);
 
-  console.log("\n✅ BabyClara workstation ready!");
-  console.log("👉 Run: npm start\n");
+  console.log("\n✅ BabyClara workstation ready.");
+  console.log("➡ Run: npm start\n");
 }
 
 module.exports = generate;
