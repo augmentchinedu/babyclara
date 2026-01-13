@@ -7,33 +7,24 @@ on:
 
 jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Create prerelease version
-        id: prerelease
-        run: |
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          # generate a prerelease version without leading 'v'
-          NEW_VERSION=$(npm version prerelease --preid=$TIMESTAMP --no-git-tag-version)
-          NEW_VERSION=${NEW_VERSION#v}
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "Generated prerelease version: $NEW_VERSION"
+      - run: npm ci
 
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release --branches main --tag-format "v${VERSION}"
+        run: |
+          # For a normal release:
+          npx semantic-release
+
+          # OR for a prerelease:
+          # npx semantic-release --prerelease $(date +'%Y%m%d%H%M%S')
