@@ -17,8 +17,7 @@
     "ws": "^8.19.0"
   },
   "scripts": {
-    "start": "node --watch core/index.js",
-    "release:dry": "npx semantic-release --ci false --dry-run"
+    "start": "node --watch core/index.js"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
@@ -39,30 +38,14 @@
     ],
     "tagFormat": "v${version}",
     "plugins": [
-      "@semantic-release/commit-analyzer",
-      "@semantic-release/release-notes-generator",
-      [
-        "@semantic-release/changelog",
-        {
-          "changelogFile": "CHANGELOG.md"
-        }
-      ],
+      "@semantic-release/changelog",
       [
         "@semantic-release/npm",
         {
           "npmPublish": true
         }
       ],
-      [
-        "@semantic-release/github",
-        {
-          "assets": [
-            "package.json",
-            "package-lock.json",
-            "CHANGELOG.md"
-          ]
-        }
-      ],
+      "@semantic-release/github",
       [
         "@semantic-release/git",
         {

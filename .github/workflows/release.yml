@@ -1,49 +1,39 @@
-name: Auto Release Per Commit
+name: Release
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: write
-  packages: write
-
 jobs:
   release:
+    name: Release
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # required for semantic-release
+        uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node.js
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: 20
-          cache: npm
+          node-version: "20"
+          cache: "npm"
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      # 4️⃣ Generate timestamped pre-release version
-      - name: Generate timestamped pre-release
+      - name: Create prerelease version
         id: prerelease
         run: |
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          # update package.json prerelease version
+          # generate a prerelease version without leading 'v'
           NEW_VERSION=$(npm version prerelease --preid=$TIMESTAMP --no-git-tag-version)
+          NEW_VERSION=${NEW_VERSION#v}
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "Generated version: $NEW_VERSION"
+          echo "Generated prerelease version: $NEW_VERSION"
 
-      # 5️⃣ Run semantic-release
-      - name: Run semantic-release
-        run: npx semantic-release --branches main --tag-format "v${VERSION}"
+      - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release --branches main --tag-format "v${VERSION}"
