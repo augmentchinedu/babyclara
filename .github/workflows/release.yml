@@ -1,31 +1,47 @@
-name: Release
+name: Auto Release Per Commit
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      # Checkout full history
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
 
+      # Install dependencies
       - name: Install dependencies
         run: npm install
 
+      # Create timestamped pre-release version
+      - name: Set release version
+        id: preversion
+        run: |
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          PRE_VERSION="0.0.0-${TIMESTAMP}"
+          echo "PRE_VERSION=$PRE_VERSION" >> $GITHUB_ENV
+
+      # Run semantic-release with timestamped pre-release
       - name: Run semantic-release
-        run: npx semantic-release
+        run: npx semantic-release --ci false --branches main --tag-format "v${{ env.PRE_VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
