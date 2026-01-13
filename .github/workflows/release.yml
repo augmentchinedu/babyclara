@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed for semantic-release
+          fetch-depth: 0  # required for semantic-release
 
-      # 2️⃣ Setup Node
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -33,11 +33,13 @@ jobs:
 
       # 4️⃣ Generate timestamped pre-release version
       - name: Generate timestamped pre-release
+        id: prerelease
         run: |
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          # bump package.json version to 0.0.0-TIMESTAMP
-          npm version prerelease --preid=$TIMESTAMP --no-git-tag-version
-          echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
+          # update package.json prerelease version
+          NEW_VERSION=$(npm version prerelease --preid=$TIMESTAMP --no-git-tag-version)
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "Generated version: $NEW_VERSION"
 
       # 5️⃣ Run semantic-release
       - name: Run semantic-release
