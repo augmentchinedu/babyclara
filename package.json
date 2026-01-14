@@ -1,6 +1,6 @@
 {
   "name": "babyclara",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "A frontend development workstation",
   "main": "index.js",
   "bin": {
@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "start": "node core/index.js",
+    "dev": "node core/index.js --watch",
     "release": "semantic-release"
   },
   "dependencies": {

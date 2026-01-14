@@ -1,4 +1,3 @@
-
 const express = require("express");
 const path = require("path");
 
@@ -11,7 +10,13 @@ async function startGUI() {
   const publicDir = path.join(__dirname, "dist");
   app.use(express.static(publicDir));
 
+  // Serve index.html on the root
   app.get("/", (req, res) => {
+    res.sendFile(path.join(publicDir, "index.html"));
+  });
+
+  // Catch‑all for SPA routing (Express 5 syntax)
+  app.get("/*splat", (req, res) => {
     res.sendFile(path.join(publicDir, "index.html"));
   });
 
@@ -24,5 +29,3 @@ async function startGUI() {
 }
 
 module.exports = startGUI;
-
-
