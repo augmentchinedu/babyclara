@@ -1,6 +1,6 @@
 {
   "name": "babyclara",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A frontend development workstation",
   "main": "index.js",
   "bin": {
@@ -10,9 +10,10 @@
   "license": "ISC",
   "private": false,
   "files": [
-    "core",
-    "functions",
-    "index.js"
+    "core/",
+    "functions/",
+    "index.js",
+    "package.json"
   ],
   "scripts": {
     "start": "node core/index.js",
