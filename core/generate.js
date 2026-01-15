@@ -39,10 +39,8 @@ async function generate() {
 
   // Step 0 — CLI init
   const defaultName = path.basename(targetDir) || "babyclara-workstation";
-  const nameInput = await ask(
-    `Workstation name (default: ${defaultName}): `
-  );
-  const workstationName = nameInput || defaultName;
+  const nameInput = await ask(`Workstation name (default: ${defaultName}): `);
+  const name = nameInput || defaultName;
 
   console.log("\nChoose framework:");
   console.log("1) Vanilla (none)");
@@ -59,7 +57,7 @@ async function generate() {
   const pkgPath = path.join(targetDir, "package.json");
 
   const pkg = {
-    name: workstationName,
+    name,
     private: true,
     scripts: {
       start: "node ./node_modules/babyclara/core/index.js",
@@ -77,13 +75,9 @@ async function generate() {
   if (!fs.existsSync(configPath)) {
     fs.writeFileSync(
       configPath,
-      `const projects = [];
-
-module.exports = {
-  workstationName: "${workstationName}",
+      `module.exports = {
+  name: "${name}",
   framework: ${framework ? `"${framework}"` : null},
-  unocss: true,
-  projects,
 };
 `
     );

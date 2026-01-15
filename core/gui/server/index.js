@@ -1,11 +1,13 @@
 const express = require("express");
 const path = require("path");
 
+const router = require("../router");
+
 async function startGUI() {
   const app = express();
-  const PORT = process.env.BABYCLARA_GUI_PORT || 5178;
+  const PORT = process.env.BABYCLARA_GUI_PORT || 5555;
 
-  const publicDir = path.join(__dirname, "dist");
+  const publicDir = path.join(__dirname, "..", "client");
 
   // 1️⃣ Serve static files first
   app.use(
@@ -14,6 +16,8 @@ async function startGUI() {
       index: false,
     })
   );
+
+  app.use("/api", router);
 
   app.get("/", (req, res) => {
     res.sendFile(path.join(publicDir, "index.html"));

@@ -19,7 +19,7 @@ if (!fs.existsSync(configPath)) {
 }
 
 const config = require(configPath);
-const { workstationName, framework, projects } = config;
+const { name, framework } = config;
 
 // Global context
 global.__BABYCLARA__ = {
@@ -35,18 +35,14 @@ async function launchGUIWithParams() {
   await startGUI();
 
   // Construct URL with query params
-  const url = `http://localhost:5178/?workstationName=${encodeURIComponent(
-    workstationName
-  )}&framework=${encodeURIComponent(framework)}`;
+  const url = `http://localhost:5555/`;
 
   // Open default browser
   open(url);
 }
 
 async function boot() {
-  console.log(
-    `🧠 Workstation: ${workstationName} | Framework: ${framework || "vanilla"}`
-  );
+  console.log(`🧠 Workstation: ${name} | Framework: ${framework || "vanilla"}`);
 
   // 1️⃣ Launch GUI
   await launchGUIWithParams();
