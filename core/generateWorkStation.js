@@ -65,7 +65,7 @@ export async function generateWorkStation() {
     private: true,
     type: "module",
     scripts: {
-      start: "node ./node_modules/babyclara/core/index.js",
+      start: "node ./node_modules/babyclara/index.js",
     },
     dependencies: {
       babyclara: "latest",
@@ -75,20 +75,18 @@ export async function generateWorkStation() {
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
   console.log("✔ package.json created");
 
-  // babyclara.config.js
+  // babyclara.config.js — overwrite always
   const configPath = path.join(targetDir, "babyclara.config.js");
 
-  if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(
-      configPath,
-      `export default {
+  fs.writeFileSync(
+    configPath,
+    `export default {
   name: "${name}",
   framework: ${framework ? `"${framework}"` : null},
 };
 `
-    );
-    console.log("✔ babyclara.config.js created");
-  }
+  );
+  console.log("✔ babyclara.config.js created/overwritten");
 
   // Install dependencies
   console.log("\n📦 Installing dependencies...");
