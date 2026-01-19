@@ -1,45 +1,60 @@
-// graphql/resolver/user.resolver.js
+// /graphql/resolvers/user.resolver.js
+import { GraphQLError } from "graphql";
 import { tguRequest, TGU_SIGNUP, TGU_SIGNIN } from "../service/tguService.js";
+
+function mirrorTguError(err, fallbackCode = "UNKNOWN_ERROR") {
+  // If err is already a GraphQLError, just throw it
+  if (err instanceof GraphQLError) return err;
+
+  // TGU error object may have code & message
+  const code = err?.code || fallbackCode;
+  const message = err?.message || "An error occurred";
+
+  return new GraphQLError(message, {
+    extensions: { code },
+  });
+}
 
 export const userResolver = {
   Mutation: {
     signup: async (_, { input }) => {
-      console.log("🔥 SIGNUP RESOLVER HIT → TGU", input);
       try {
         const data = await tguRequest(TGU_SIGNUP, { input });
-        if (!data?.signup) throw new Error("TGU signup returned null");
-        console.log("✅ TGU signup response:", data.signup);
+
+        // If TGU returns an error, throw it
+        if (data?.error) throw mirrorTguError(data.error);
+
+        if (!data?.signup) {
+          // fallback if TGU returns null without error
+          throw mirrorTguError({
+            message: "User already exists",
+            code: "USER_EXISTS",
+          });
+        }
+
         return data.signup;
       } catch (err) {
-        console.warn("❌ TGU signup failed, falling back to dummy", err.message);
-        return {
-          token: "dummy-token",
-          user: {
-            id: "1",
-            username: input.username,
-            email: input.email,
-          },
-        };
+        throw mirrorTguError(err, "SIGNUP_FAILED");
       }
     },
 
     signin: async (_, { input }) => {
-      console.log("🔥 SIGNIN RESOLVER HIT → TGU", input);
       try {
         const data = await tguRequest(TGU_SIGNIN, { input });
-        if (!data?.signin) throw new Error("TGU signin returned null");
-        console.log("✅ TGU signin response:", data.signin);
+
+        if (data?.error) throw mirrorTguError(data.error);
+
+        if (!data?.signin) {
+          // fallback if TGU returns null without error
+          throw mirrorTguError({
+            message: "Invalid credentials",
+            code: "INVALID_CREDENTIALS",
+          });
+        }
+
         return data.signin;
       } catch (err) {
-        console.warn("❌ TGU signin failed, falling back to dummy", err.message);
-        return {
-          token: "dummy-token",
-          user: {
-            id: "1",
-            username: input.identifier,
-            email: `${input.identifier}@test.com`,
-          },
-        };
+        throw mirrorTguError(err, "INVALID_CREDENTIALS");
       }
     },
   },

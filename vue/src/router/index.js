@@ -8,16 +8,16 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const store = useStore();
+  const { app, init } = useStore();
 
   // ✅ Only run guard for non-auth routes
   const isAuthRoute = to.path.startsWith("/auth");
 
   // 1️⃣ Initialize workstation once
-  if (!store.app.isInitialized) {
+  if (!app.isInitialized) {
     try {
       console.log("Initializing...");
-      await store.init();
+      await init();
     } catch (err) {
       console.error("Initialization failed:", err);
       return next(false);
@@ -25,7 +25,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 2️⃣ Redirect unauthenticated users only for protected routes
-  if (!isAuthRoute && !store.isAuthenticated) {
+  if (!isAuthRoute && !app.isAuthenticated) {
     return next("/auth/signin"); // Redirect to signin
   }
 

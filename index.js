@@ -71,29 +71,9 @@ const wsServer = new WebSocketServer({ server: httpServer, path: "/graphql" });
 useServer({ schema }, wsServer);
 
 // -----------------------------
-// Apollo Logging Plugin
-// -----------------------------
-const gqlLoggerPlugin = {
-  async requestDidStart(requestContext) {
-    const { request } = requestContext;
-    console.group("🧠 GraphQL Request");
-    console.log("Operation:", request.operationName);
-    console.log("Query:", request.query);
-    console.log("Variables:", request.variables);
-    console.groupEnd();
-
-    return {
-      async didEncounterErrors(ctx) {
-        console.error("❌ GraphQL Errors:", ctx.errors);
-      },
-    };
-  },
-};
-
-// -----------------------------
 // Apollo Server
 // -----------------------------
-const apolloServer = new ApolloServer({ schema, plugins: [gqlLoggerPlugin] });
+const apolloServer = new ApolloServer({ schema });
 await apolloServer.start();
 app.use("/graphql", express.json(), expressMiddleware(apolloServer));
 

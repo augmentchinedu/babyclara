@@ -1,22 +1,48 @@
-// stores/user.js
+// /src/store/index.js
 import { reactive } from "vue";
 import { defineStore } from "pinia";
-import {
-  provideApolloClient,
-  useMutation,
-  useQuery,
-} from "@vue/apollo-composable";
+import { useRouter } from "vue-router";
+import { provideApolloClient, useMutation } from "@vue/apollo-composable";
 import { SIGNIN } from "../graphql/mutations/signin.js";
 import { SIGNUP } from "../graphql/mutations/signup.js";
 import { apolloClient } from "../graphql/apollo.js";
+import { authErrorMap } from "../errors/authErrorMap.js";
 
-// 🔥 THIS IS REQUIRED FOR STORES
 provideApolloClient(apolloClient);
 
+/**
+ * Normalize GraphQL or TGU errors for UI
+ */
+function normalizeError(err) {
+  // 1️⃣ Check if it's a GraphQLError with extensions
+  const gqlErr = err?.graphQLErrors?.[0];
+  if (gqlErr) {
+    const code = gqlErr.extensions?.code || "UNKNOWN_ERROR";
+    return {
+      code,
+      message: authErrorMap[code] || gqlErr.message,
+    };
+  }
+
+  // 2️⃣ Check if it's an object from TGU resolver
+  if (err?.code || err?.message) {
+    return {
+      code: err.code || "UNKNOWN_ERROR",
+      message: err.message || "Something went wrong",
+    };
+  }
+
+  // 3️⃣ Fallback
+  return {
+    code: "UNKNOWN_ERROR",
+    message: "Something went wrong",
+  };
+}
+
 export const useStore = defineStore("store", () => {
-  // state
+  const router = useRouter();
+
   const app = reactive({
-    name: null,
     isInitialized: false,
     isAuthenticated: !!localStorage.getItem("token"),
   });
@@ -25,76 +51,81 @@ export const useStore = defineStore("store", () => {
     token: localStorage.getItem("token"),
   });
 
-  const workstation = reactive({});
-
-  // actions
   async function init() {
-    if (app.isInitialized) return; // ✅ Prevent double initialization
+    if (app.isInitialized) return;
+    app.isInitialized = true;
+    console.info("🚀 App Initialized");
+  }
+
+  async function signup(payload) {
+    const { mutate } = useMutation(SIGNUP);
 
     try {
-      app.isInitialized = true; // ✅ Mark as initialized
-      console.info("Workstation Initialized");
+      const res = await mutate({ input: payload });
+      const auth = res.data.signup;
+
+      if (!auth?.token) {
+        // Use resolver-provided error if present
+        throw (
+          auth?.error || { code: "USER_EXISTS", message: "User already exists" }
+        );
+      }
+
+      user.token = auth.token;
+      localStorage.setItem("token", user.token);
+      app.isAuthenticated = true;
+
+      router.push("/");
+      return true;
     } catch (err) {
-      console.error("Workstation init failed:", err);
-      app.isInitialized = false; // ✅ Ensure we don't falsely mark initialized
-      throw err; // important for router guard
+      const normalized = normalizeError(err);
+      console.error("Signup error:", normalized);
+      throw normalized; // UI will show error.message
     }
   }
 
   async function signin(payload) {
-    const { mutate, onError } = useMutation(SIGNIN);
+    const { mutate } = useMutation(SIGNIN);
 
-    onError((err) => {
-      console.error("Signin mutation error:", err);
-    });
+    try {
+      const res = await mutate({ input: payload });
+      const auth = res.data.signin;
 
-    console.log("Signin payload:", payload);
+      if (!auth?.token) {
+        throw (
+          auth?.error || {
+            code: "INVALID_CREDENTIALS",
+            message: "Invalid credentials",
+          }
+        );
+      }
 
-    const res = await mutate({
-      input: payload,
-    });
+      user.token = auth.token;
+      localStorage.setItem("token", user.token);
+      app.isAuthenticated = true;
 
-    console.log("SignIn result:", res);
-
-    // ✅ update reactive state directly
-    user.token = res.data.signin.token;
-    app.isAuthenticated = true;
-
-    localStorage.setItem("token", user.token);
-  }
-
-  async function signup(payload) {
-    const { mutate, onError } = useMutation(SIGNUP);
-
-    onError((err) => {
-      console.error("Signup mutation error:", err);
-    });
-
-    console.log("SignUp payload:", payload);
-
-    const res = await mutate({
-      input: payload,
-    });
-
-    console.log("Signup result:", res);
-
-    user.token = res.data.signup.token;
-    app.isAuthenticated = true;
-
-    localStorage.setItem("token", user.token);
+      router.push("/");
+      return true;
+    } catch (err) {
+      const normalized = normalizeError(err);
+      console.error("Signin error:", normalized);
+      throw normalized;
+    }
   }
 
   function signout() {
     localStorage.removeItem("token");
+    user.token = null;
+    app.isAuthenticated = false;
+    router.push("/auth/signin");
   }
 
   return {
+    init,
     app,
     user,
-    workstation,
-    init,
-    signin,
     signup,
+    signin,
     signout,
   };
 });
