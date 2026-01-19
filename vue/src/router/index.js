@@ -1,5 +1,5 @@
 import { createWebHistory, createRouter } from "vue-router";
-import { useWorkStationStore, useUserStore } from "../store";
+import { useStore } from "../store";
 import routes from "./routes";
 
 const router = createRouter({
@@ -8,25 +8,24 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  const workstation = useWorkStationStore();
-  const user = useUserStore();
+  const store = useStore();
 
   // ✅ Only run guard for non-auth routes
   const isAuthRoute = to.path.startsWith("/auth");
 
   // 1️⃣ Initialize workstation once
-  if (!workstation.initialized) {
+  if (!store.app.isInitialized) {
     try {
-      console.log("Initializing workstation...");
-      await workstation.init();
+      console.log("Initializing...");
+      await store.init();
     } catch (err) {
-      console.error("Workstation initialization failed:", err);
+      console.error("Initialization failed:", err);
       return next(false);
     }
   }
 
   // 2️⃣ Redirect unauthenticated users only for protected routes
-  if (!isAuthRoute && !user.isAuthenticated) {
+  if (!isAuthRoute && !store.isAuthenticated) {
     return next("/auth/signin"); // Redirect to signin
   }
 

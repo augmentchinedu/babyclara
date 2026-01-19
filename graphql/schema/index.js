@@ -18,4 +18,5 @@ const loadFromModule = (file) =>
 export const typeDefs = `
 ${loadFromModule("file.gql")}
 ${loadFromModule("query.gql")}
+${loadFromModule("user.gql")}
 `;
