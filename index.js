@@ -21,7 +21,7 @@ import { loadTokens } from "./core/session/loadTokens.js";
 import { bootstrapAfterAuth } from "./core/runtime/bootstrapAfterAuth.js";
 import { loadWorkstation } from "./core/cache/loadWorkstation.js";
 import { loadProjects } from "./core/cache/loadProjects.js";
-import { updateRuntimeState } from "./core/runtime/state.js";
+import { updateRuntimeState, runtimeState } from "./core/runtime/state.js";
 
 const open = (...args) => import("open").then((mod) => mod.default(...args));
 
@@ -46,11 +46,17 @@ const { name: workstationName, framework, BABYCLARA_TGU_URL } = config;
 // Load cached data into runtime state immediately for fast startup
 const cachedWorkstation = loadWorkstation();
 const cachedProjects = loadProjects();
+const initialSession = loadTokens();
+
+updateRuntimeState({
+  authenticated: !!initialSession?.accessToken,
+  user: initialSession?.user || null,
+  workstation: cachedWorkstation?.data || null,
+  projects: cachedProjects?.data || [],
+  source: "cache",
+});
+
 if (cachedWorkstation?.data || cachedProjects?.data) {
-  updateRuntimeState({
-    workstation: cachedWorkstation?.data,
-    projects: cachedProjects?.data,
-  });
   console.log("📦 Loaded workstation and projects from cache");
 }
 
@@ -80,10 +86,11 @@ console.log(
 );
 
 // Auto-bootstrap if session exists
-const session = loadTokens();
-if (session?.accessToken && session?.userId) {
+if (initialSession?.accessToken && initialSession?.user?.id) {
   console.log("🔄 Re-authenticating session...");
-  bootstrapAfterAuth(session.userId, session.accessToken).catch(() => {});
+  bootstrapAfterAuth(initialSession.user.id, initialSession.accessToken).catch(
+    () => {},
+  );
 }
 
 const app = express();
@@ -96,6 +103,11 @@ app.get("/", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get("/*splat", (req, res) =>
   res.sendFile(path.join(publicDir, "index.html")),
 );
+
+// Runtime State Endpoint
+app.get("/runtime/state", (req, res) => {
+  res.json(runtimeState);
+});
 
 // -----------------------------
 // GraphQL Schema & Resolvers

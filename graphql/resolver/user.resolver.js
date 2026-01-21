@@ -32,7 +32,7 @@ export const userResolver = {
           saveTokens({
             accessToken: result.token,
             refreshToken: result.refreshToken,
-            userId: result.user.id,
+            user: result.user,
           });
           // Bootstrap workstation and projects
           bootstrapAfterAuth(result.user.id, result.token).catch(() => {});
@@ -54,7 +54,7 @@ export const userResolver = {
           saveTokens({
             accessToken: result.token,
             refreshToken: result.refreshToken,
-            userId: result.user.id,
+            user: result.user,
           });
           // Bootstrap workstation and projects
           bootstrapAfterAuth(result.user.id, result.token).catch(() => {});
@@ -80,7 +80,7 @@ export const userResolver = {
           saveTokens({
             accessToken: result.token,
             refreshToken: result.refreshToken,
-            userId: result.user.id,
+            user: result.user,
           });
           // Bootstrap workstation and projects
           bootstrapAfterAuth(result.user.id, result.token).catch(() => {});

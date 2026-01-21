@@ -1,7 +1,7 @@
 import fs from "fs";
 import { SESSION_FILE } from "./sessionPath.js";
 
-export const saveTokens = ({ accessToken, refreshToken, userId }) => {
+export const saveTokens = ({ accessToken, refreshToken, user }) => {
   if (!accessToken || !refreshToken) {
     throw new Error("Cannot save session: missing tokens");
   }
@@ -9,7 +9,10 @@ export const saveTokens = ({ accessToken, refreshToken, userId }) => {
   const payload = {
     accessToken,
     refreshToken,
-    userId, // Store userId for ownership checks
+    user: {
+      id: user.id,
+      username: user.username,
+    },
     savedAt: new Date().toISOString(),
   };
 

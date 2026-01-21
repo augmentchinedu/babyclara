@@ -71,7 +71,7 @@ describe("BabyClara Resolvers & Service", () => {
       expect(saveTokens).toHaveBeenCalledWith({
         accessToken: "fake-jwt-token",
         refreshToken: "fake-refresh-token",
-        userId: "1",
+        user: expect.objectContaining({ id: "1" }),
       });
     });
 
@@ -131,7 +131,7 @@ describe("BabyClara Resolvers & Service", () => {
       expect(saveTokens).toHaveBeenCalledWith({
         accessToken: "fake-jwt-token",
         refreshToken: "fake-refresh-token",
-        userId: "1",
+        user: expect.objectContaining({ id: "1" }),
       });
     });
   });
@@ -173,7 +173,7 @@ describe("BabyClara Resolvers & Service", () => {
       expect(saveTokens).toHaveBeenCalledWith({
         accessToken: "new-access-token",
         refreshToken: "new-refresh-token",
-        userId: "1",
+        user: expect.objectContaining({ id: "1" }),
       });
     });
   });

@@ -44,15 +44,38 @@ export const useStore = defineStore("store", () => {
 
   const app = reactive({
     isInitialized: false,
-    isAuthenticated: !!localStorage.getItem("token"),
+    isAuthenticated: false,
   });
 
   const user = reactive({
-    token: localStorage.getItem("token"),
+    data: null,
+  });
+
+  const workstation = reactive({
+    data: null,
+  });
+
+  const projects = reactive({
+    list: [],
   });
 
   async function init() {
     if (app.isInitialized) return;
+
+    try {
+      const res = await fetch("/runtime/state");
+      const state = await res.json();
+
+      app.isAuthenticated = state.authenticated;
+      user.data = state.user;
+      workstation.data = state.workstation;
+      projects.list = state.projects || [];
+
+      console.info("📦 Client store hydrated from runtime state");
+    } catch (err) {
+      console.warn("⚠️ Failed to hydrate from runtime state:", err.message);
+    }
+
     app.isInitialized = true;
     console.info("🚀 App Initialized");
   }
@@ -65,22 +88,24 @@ export const useStore = defineStore("store", () => {
       const auth = res.data.signup;
 
       if (!auth?.token) {
-        // Use resolver-provided error if present
         throw (
           auth?.error || { code: "USER_EXISTS", message: "User already exists" }
         );
       }
 
-      user.token = auth.token;
-      localStorage.setItem("token", user.token);
+      user.data = auth.user;
       app.isAuthenticated = true;
 
+      // Re-init to get workstation/projects if needed,
+      // although the server does it in the background.
+      // For immediate UI update, we could wait a bit or the server could return it.
+      // But for now, let's just push Home.
       router.push("/");
       return true;
     } catch (err) {
       const normalized = normalizeError(err);
       console.error("Signup error:", normalized);
-      throw normalized; // UI will show error.message
+      throw normalized;
     }
   }
 
@@ -100,8 +125,7 @@ export const useStore = defineStore("store", () => {
         );
       }
 
-      user.token = auth.token;
-      localStorage.setItem("token", user.token);
+      user.data = auth.user;
       app.isAuthenticated = true;
 
       router.push("/");
@@ -114,8 +138,11 @@ export const useStore = defineStore("store", () => {
   }
 
   function signout() {
-    localStorage.removeItem("token");
-    user.token = null;
+    // We should probably have a signout mutation on the server to clear session.json
+    // But for now, just local state clear.
+    user.data = null;
+    workstation.data = null;
+    projects.list = [];
     app.isAuthenticated = false;
     router.push("/auth/signin");
   }
@@ -124,6 +151,8 @@ export const useStore = defineStore("store", () => {
     init,
     app,
     user,
+    workstation,
+    projects,
     signup,
     signin,
     signout,

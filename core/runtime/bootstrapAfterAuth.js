@@ -71,7 +71,7 @@ export async function bootstrapAfterAuth(userId, token) {
       }
     }
 
-    updateRuntimeState({ workstation, projects });
+    updateRuntimeState({ authenticated: true, workstation, projects });
     console.log(`🚀 Bootstrap complete. ${projects.length} projects ready.`);
     return { workstation, projects };
   } catch (err) {

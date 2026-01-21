@@ -9,6 +9,7 @@ describe("Session Persistence Utilities", () => {
   const mockTokens = {
     accessToken: "test-access-token",
     refreshToken: "test-refresh-token",
+    user: { id: "1", username: "test" },
   };
 
   beforeEach(() => {
