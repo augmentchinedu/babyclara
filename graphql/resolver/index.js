@@ -1,5 +1,6 @@
 import { fileResolver } from "./file.resolver.js";
 import { userResolver } from "./user.resolver.js";
+import { runtimeResolver } from "./runtime.resolver.js";
 
 export const resolver = {
   Query: {
@@ -13,5 +14,6 @@ export const resolver = {
 
   Subscription: {
     ...fileResolver.Subscription,
+    ...runtimeResolver.Subscription,
   },
 };

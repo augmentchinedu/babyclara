@@ -1,10 +1,19 @@
-// /src/store/index.js
-import { reactive } from "vue";
+import { reactive, watch } from "vue";
 import { defineStore } from "pinia";
 import { useRouter } from "vue-router";
-import { provideApolloClient, useMutation } from "@vue/apollo-composable";
+import {
+  provideApolloClient,
+  useQuery,
+  useMutation,
+  useSubscription,
+} from "@vue/apollo-composable";
 import { SIGNIN } from "../graphql/mutations/signin.js";
 import { SIGNUP } from "../graphql/mutations/signup.js";
+import {
+  GET_RUNTIME_STATE,
+  SIGN_OUT,
+  RUNTIME_PROJECTS_SUBSCRIPTION,
+} from "../graphql/runtime.js";
 import { apolloClient } from "../graphql/apollo.js";
 import { authErrorMap } from "../errors/authErrorMap.js";
 
@@ -59,25 +68,36 @@ export const useStore = defineStore("store", () => {
     list: [],
   });
 
+  const {
+    result: runtimeResult,
+    loading: runtimeLoading,
+    onResult: onRuntimeResult,
+  } = useQuery(GET_RUNTIME_STATE);
+  const { mutate: performSignOut } = useMutation(SIGN_OUT);
+  const { result: projectsUpdate } = useSubscription(
+    RUNTIME_PROJECTS_SUBSCRIPTION,
+  );
+
+  // Watch for subscription updates
+  watch(projectsUpdate, (newVal) => {
+    if (newVal?.runtimeProjects) {
+      projects.list = newVal.runtimeProjects;
+      console.info("⚡ Projects updated via subscription");
+    }
+  });
+
   async function init() {
     if (app.isInitialized) return;
 
-    try {
-      const res = await fetch("/runtime/state");
-      const state = await res.json();
-
+    onRuntimeResult((res) => {
+      const state = res.data.runtimeState;
       app.isAuthenticated = state.authenticated;
       user.data = state.user;
       workstation.data = state.workstation;
       projects.list = state.projects || [];
-
-      console.info("📦 Client store hydrated from runtime state");
-    } catch (err) {
-      console.warn("⚠️ Failed to hydrate from runtime state:", err.message);
-    }
-
-    app.isInitialized = true;
-    console.info("🚀 App Initialized");
+      app.isInitialized = true;
+      console.info("📦 Client store hydrated from GraphQL runtime state");
+    });
   }
 
   async function signup(payload) {
@@ -137,14 +157,18 @@ export const useStore = defineStore("store", () => {
     }
   }
 
-  function signout() {
-    // We should probably have a signout mutation on the server to clear session.json
-    // But for now, just local state clear.
-    user.data = null;
-    workstation.data = null;
-    projects.list = [];
-    app.isAuthenticated = false;
-    router.push("/auth/signin");
+  async function signout() {
+    try {
+      const res = await performSignOut();
+      const state = res.data.signOut;
+
+      app.isAuthenticated = state.authenticated;
+      user.data = state.user;
+
+      router.push("/auth/signin");
+    } catch (err) {
+      console.error("Signout failed:", err.message);
+    }
   }
 
   return {

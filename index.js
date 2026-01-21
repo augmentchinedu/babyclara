@@ -18,6 +18,7 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { typeDefs } from "./graphql/schema/index.js";
 import { resolver as resolvers } from "./graphql/resolver/index.js";
 import { loadTokens } from "./core/session/loadTokens.js";
+import { SESSION_FILE } from "./core/session/sessionPath.js";
 import { bootstrapAfterAuth } from "./core/runtime/bootstrapAfterAuth.js";
 import { loadWorkstation } from "./core/cache/loadWorkstation.js";
 import { loadProjects } from "./core/cache/loadProjects.js";
@@ -103,11 +104,6 @@ app.get("/", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get("/*splat", (req, res) =>
   res.sendFile(path.join(publicDir, "index.html")),
 );
-
-// Runtime State Endpoint
-app.get("/runtime/state", (req, res) => {
-  res.json(runtimeState);
-});
 
 // -----------------------------
 // GraphQL Schema & Resolvers

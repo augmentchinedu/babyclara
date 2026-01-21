@@ -1,0 +1,53 @@
+type RuntimeState {
+  authenticated: Boolean!
+  user: User
+  workstation: Workstation
+  projects: [Project!]!
+  source: String!
+  lastUpdated: String
+}
+
+type Workstation {
+  id: ID!
+  name: String!
+  owner: User
+}
+
+type Project {
+  id: ID!
+  name: String!
+  path: String
+}
+
+type File {
+  id: ID!
+  name: String!
+  path: String!
+  content: String
+}
+
+type Route {
+  id: ID!
+  path: String!
+  method: String!
+}
+
+type Function {
+  id: ID!
+  name: String!
+}
+
+extend type Query {
+  runtimeState: RuntimeState!
+}
+
+extend type Mutation {
+  signOut: RuntimeState!
+}
+
+extend type Subscription {
+  runtimeProjects: [Project!]!
+  runtimeFiles(projectId: ID!): [File!]!
+  runtimeRoutes(projectId: ID!): [Route!]!
+  runtimeFunctions(projectId: ID!): [Function!]!
+}
