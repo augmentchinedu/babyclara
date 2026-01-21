@@ -84,15 +84,10 @@ export async function generateWorkStation() {
 
   fs.writeFileSync(
     configPath,
-    `export const BABYCLARA_TGU_URL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000/graphql"
-    : "https://great-unknown.onrender.com/graphql";
-
-export default {
+    `export default {
   name: "${name}",
   framework: ${framework ? `"${framework}"` : null},
-  BABYCLARA_TGU_URL,
+  BABYCLARA_TGU_URL: "https://great-unknown.onrender.com/graphql",
 };
 `,
   );
