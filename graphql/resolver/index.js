@@ -15,5 +15,3 @@ export const resolver = {
     ...fileResolver.Subscription,
   },
 };
-
-console.log("Resolvers loaded:", Object.keys(resolver.Mutation));
