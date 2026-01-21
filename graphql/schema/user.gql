@@ -5,9 +5,16 @@ type User {
   createdAt: String!
 }
 
+type AuthError {
+  message: String!
+  code: String!
+}
+
 type AuthPayload {
-  user: User!
-  token: String!
+  user: User
+  token: String
+  refreshToken: String
+  error: AuthError
 }
 
 input SignUpInput {
@@ -24,4 +31,5 @@ input SignInInput {
 type Mutation {
   signup(input: SignUpInput!): AuthPayload!
   signin(input: SignInInput!): AuthPayload!
+  refreshToken(token: String!): AuthPayload!
 }

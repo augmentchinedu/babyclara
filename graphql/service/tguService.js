@@ -1,15 +1,21 @@
-// graphql/service/tguService.js
-export const TGU_URL = "https://great-unknown.onrender.com/graphql";
+import { BABYCLARA_TGU_URL } from "../../babyclara.config.js";
+
+export const TGU_URL = BABYCLARA_TGU_URL;
 
 /**
  * Make a request to TGU GraphQL API and return data.
  * If TGU responds with errors, include them in the `error` property instead of throwing.
  */
-export async function tguRequest(query, variables = {}) {
+export async function tguRequest(query, variables = {}, token = null) {
   try {
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(TGU_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ query, variables }),
     });
 
@@ -34,58 +40,21 @@ export async function tguRequest(query, variables = {}) {
 }
 
 // -------------------------
-// GraphQL typeDefs
-// -------------------------
-export const typeDefs = `
-type User {
-  id: ID!
-  username: String!
-  email: String!
-}
-
-type AuthError {
-  message: String!
-  code: String!
-}
-
-type AuthPayload {
-  token: String       # nullable
-  user: User          # nullable
-  error: AuthError    # nullable
-}
-
-input SignUpInput {
-  username: String!
-  email: String!
-  password: String!
-}
-
-input SignInInput {
-  identifier: String!
-  password: String!
-}
-
-type Mutation {
-  signup(input: SignUpInput!): AuthPayload!
-  signin(input: SignInInput!): AuthPayload!
-}
-
-type Query {
-  _empty: String
-}
-`;
-
-// -------------------------
 // TGU GraphQL queries/mutations
 // -------------------------
 export const TGU_SIGNUP = `
   mutation SignUp($input: SignUpInput!) {
     signup(input: $input) {
       token
+      refreshToken
       user {
         id
         username
         email
+      }
+      error {
+        code
+        message
       }
     }
   }
@@ -95,10 +64,33 @@ export const TGU_SIGNIN = `
   mutation SignIn($input: SignInInput!) {
     signin(input: $input) {
       token
+      refreshToken
       user {
         id
         username
         email
+      }
+      error {
+        code
+        message
+      }
+    }
+  }
+`;
+
+export const TGU_REFRESH_TOKEN = `
+  mutation RefreshToken($token: String!) {
+    refreshToken(token: $token) {
+      token
+      refreshToken
+      user {
+        id
+        username
+        email
+      }
+      error {
+        code
+        message
       }
     }
   }

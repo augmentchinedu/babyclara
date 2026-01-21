@@ -19,7 +19,7 @@ function ask(question) {
     rl.question(question, (answer) => {
       rl.close();
       resolve(answer.trim());
-    })
+    }),
   );
 }
 
@@ -66,9 +66,13 @@ export async function generateWorkStation() {
     type: "module",
     scripts: {
       start: "node ./node_modules/babyclara/index.js",
+      test: "vitest run",
     },
     dependencies: {
       babyclara: "latest",
+    },
+    devDependencies: {
+      vitest: "latest",
     },
   };
 
@@ -80,11 +84,18 @@ export async function generateWorkStation() {
 
   fs.writeFileSync(
     configPath,
-    `export default {
+    `const isProduction = process.env.NODE_ENV === "production";
+
+export const BABYCLARA_TGU_URL = isProduction
+  ? "https://great-unknown.onrender.com/graphql"
+  : "http://localhost:3000/graphql";
+
+export default {
   name: "${name}",
   framework: ${framework ? `"${framework}"` : null},
+  BABYCLARA_TGU_URL,
 };
-`
+`,
   );
   console.log("✔ babyclara.config.js created/overwritten");
 

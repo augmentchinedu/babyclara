@@ -15,8 +15,8 @@ import { WebSocketServer } from "ws";
 import { useServer } from "graphql-ws/use/ws";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 
-import { userResolver } from "./graphql/resolver/user.resolver.js"; // ✅ new
-import { typeDefs } from "./graphql/service/tguService.js"; // ✅ typeDefs for TGU
+import { typeDefs } from "./graphql/schema/index.js";
+import { resolver as resolvers } from "./graphql/resolver/index.js";
 
 const open = (...args) => import("open").then((mod) => mod.default(...args));
 
@@ -36,10 +36,31 @@ const url = "http://localhost:5178/";
 
 // ✅ ESM config import
 const { default: config } = await import(pathToFileURL(configPath).href);
-const { name: workstationName, framework, projects = [] } = config;
+const { name: workstationName, framework, BABYCLARA_TGU_URL } = config;
+
+if (!BABYCLARA_TGU_URL) {
+  throw new Error(
+    "❌ Configuration error: BABYCLARA_TGU_URL is missing in babyclara.config.js",
+  );
+}
+
+// Validate TGU Reachability
+try {
+  const tguPing = await fetch(BABYCLARA_TGU_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: "{ __typename }" }),
+  });
+  if (!tguPing.ok) throw new Error(`Status ${tguPing.status}`);
+  console.log(`✅ TGU Connection verified at ${BABYCLARA_TGU_URL}`);
+} catch (err) {
+  throw new Error(
+    `❌ TGU server unreachable at ${BABYCLARA_TGU_URL}: ${err.message}. Ensure TGU is running.`,
+  );
+}
 
 console.log(
-  `🧠 Workstation: ${workstationName} | Framework: ${framework || "vanilla"}`
+  `🧠 Workstation: ${workstationName} | Framework: ${framework || "vanilla"}`,
 );
 
 const app = express();
@@ -50,7 +71,7 @@ const publicDir = path.join(__dirname, "client");
 app.use(express.static(publicDir, { maxAge: "1d", index: false }));
 app.get("/", (req, res) => res.sendFile(path.join(publicDir, "index.html")));
 app.get("/*splat", (req, res) =>
-  res.sendFile(path.join(publicDir, "index.html"))
+  res.sendFile(path.join(publicDir, "index.html")),
 );
 
 // -----------------------------
@@ -58,24 +79,54 @@ app.get("/*splat", (req, res) =>
 // -----------------------------
 const schema = makeExecutableSchema({
   typeDefs,
-  resolvers: {
-    Mutation: { ...userResolver.Mutation }, // spread user resolvers
-  },
+  resolvers,
 });
+
+// -----------------------------
+// Starts HTTP Server
+// -----------------------------
+const httpServer = http.createServer(app);
 
 // -----------------------------
 // GraphQL WebSocket Server
 // -----------------------------
-const httpServer = http.createServer(app);
 const wsServer = new WebSocketServer({ server: httpServer, path: "/graphql" });
-useServer({ schema }, wsServer);
+
+useServer(
+  {
+    schema,
+    context: (ctx) => {
+      // Forward token from connectionParams or query
+      const token =
+        ctx.connectionParams?.token ||
+        new URL(ctx.extra.request.url, "http://localhost").searchParams.get(
+          "token",
+        );
+      return { token };
+    },
+  },
+  wsServer,
+);
 
 // -----------------------------
 // Apollo Server
 // -----------------------------
-const apolloServer = new ApolloServer({ schema });
+const apolloServer = new ApolloServer({
+  schema,
+});
 await apolloServer.start();
-app.use("/graphql", express.json(), expressMiddleware(apolloServer));
+
+app.use(
+  "/graphql",
+  express.json(),
+  expressMiddleware(apolloServer, {
+    context: async ({ req }) => {
+      const auth = req.headers.authorization || "";
+      const token = auth.startsWith("Bearer ") ? auth.split(" ")[1] : null;
+      return { token };
+    },
+  }),
+);
 
 // -----------------------------
 // Start File Watcher
