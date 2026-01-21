@@ -18,6 +18,10 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 import { typeDefs } from "./graphql/schema/index.js";
 import { resolver as resolvers } from "./graphql/resolver/index.js";
 import { loadTokens } from "./core/session/loadTokens.js";
+import { bootstrapAfterAuth } from "./core/runtime/bootstrapAfterAuth.js";
+import { loadWorkstation } from "./core/cache/loadWorkstation.js";
+import { loadProjects } from "./core/cache/loadProjects.js";
+import { updateRuntimeState } from "./core/runtime/state.js";
 
 const open = (...args) => import("open").then((mod) => mod.default(...args));
 
@@ -38,6 +42,17 @@ const url = "http://localhost:5178/";
 // ✅ ESM config import
 const { default: config } = await import(pathToFileURL(configPath).href);
 const { name: workstationName, framework, BABYCLARA_TGU_URL } = config;
+
+// Load cached data into runtime state immediately for fast startup
+const cachedWorkstation = loadWorkstation();
+const cachedProjects = loadProjects();
+if (cachedWorkstation?.data || cachedProjects?.data) {
+  updateRuntimeState({
+    workstation: cachedWorkstation?.data,
+    projects: cachedProjects?.data,
+  });
+  console.log("📦 Loaded workstation and projects from cache");
+}
 
 if (!BABYCLARA_TGU_URL) {
   throw new Error(
@@ -63,6 +78,13 @@ try {
 console.log(
   `🧠 Workstation: ${workstationName} | Framework: ${framework || "vanilla"}`,
 );
+
+// Auto-bootstrap if session exists
+const session = loadTokens();
+if (session?.accessToken && session?.userId) {
+  console.log("🔄 Re-authenticating session...");
+  bootstrapAfterAuth(session.userId, session.accessToken).catch(() => {});
+}
 
 const app = express();
 const PORT = process.env.BABYCLARA_GUI_PORT || 5178;

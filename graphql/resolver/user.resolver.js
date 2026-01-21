@@ -7,6 +7,7 @@ import {
   TGU_REFRESH_TOKEN,
 } from "../service/tguService.js";
 import { saveTokens } from "../../core/session/saveTokens.js";
+import { bootstrapAfterAuth } from "../../core/runtime/bootstrapAfterAuth.js";
 
 function mirrorTguError(err, fallbackCode = "UNKNOWN_ERROR") {
   if (err instanceof GraphQLError) return err;
@@ -31,7 +32,10 @@ export const userResolver = {
           saveTokens({
             accessToken: result.token,
             refreshToken: result.refreshToken,
+            userId: result.user.id,
           });
+          // Bootstrap workstation and projects
+          bootstrapAfterAuth(result.user.id, result.token).catch(() => {});
         }
 
         return result;
@@ -50,7 +54,10 @@ export const userResolver = {
           saveTokens({
             accessToken: result.token,
             refreshToken: result.refreshToken,
+            userId: result.user.id,
           });
+          // Bootstrap workstation and projects
+          bootstrapAfterAuth(result.user.id, result.token).catch(() => {});
         }
 
         return result;
@@ -73,7 +80,10 @@ export const userResolver = {
           saveTokens({
             accessToken: result.token,
             refreshToken: result.refreshToken,
+            userId: result.user.id,
           });
+          // Bootstrap workstation and projects
+          bootstrapAfterAuth(result.user.id, result.token).catch(() => {});
         }
 
         return result;

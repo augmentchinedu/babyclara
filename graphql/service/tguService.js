@@ -95,3 +95,25 @@ export const TGU_REFRESH_TOKEN = `
     }
   }
 `;
+
+export const GET_WORKSTATION = `
+  query GetWorkstation($name: String!) {
+    workstation(name: $name) {
+      id
+      name
+      owner {
+        id
+      }
+    }
+  }
+`;
+
+export const GET_PROJECTS = `
+  query GetProjects($workstationId: ID!) {
+    projects(workstationId: $workstationId) {
+      id
+      name
+      path
+    }
+  }
+`;
