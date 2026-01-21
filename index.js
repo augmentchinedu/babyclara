@@ -17,6 +17,7 @@ import { makeExecutableSchema } from "@graphql-tools/schema";
 
 import { typeDefs } from "./graphql/schema/index.js";
 import { resolver as resolvers } from "./graphql/resolver/index.js";
+import { loadTokens } from "./core/session/loadTokens.js";
 
 const open = (...args) => import("open").then((mod) => mod.default(...args));
 
@@ -97,11 +98,17 @@ useServer(
     schema,
     context: (ctx) => {
       // Forward token from connectionParams or query
-      const token =
+      let token =
         ctx.connectionParams?.token ||
         new URL(ctx.extra.request.url, "http://localhost").searchParams.get(
           "token",
         );
+
+      // Fallback to persisted session
+      if (!token) {
+        token = loadTokens()?.accessToken;
+      }
+
       return { token };
     },
   },
@@ -122,7 +129,13 @@ app.use(
   expressMiddleware(apolloServer, {
     context: async ({ req }) => {
       const auth = req.headers.authorization || "";
-      const token = auth.startsWith("Bearer ") ? auth.split(" ")[1] : null;
+      let token = auth.startsWith("Bearer ") ? auth.split(" ")[1] : null;
+
+      // Fallback to persisted session
+      if (!token) {
+        token = loadTokens()?.accessToken;
+      }
+
       return { token };
     },
   }),

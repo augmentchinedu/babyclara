@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 
 
 babyclara.config.js
+.babyclara/session.json

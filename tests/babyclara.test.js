@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { userResolver } from "../graphql/resolver/user.resolver.js";
 import { TGU_URL } from "../graphql/service/tguService.js";
+import { saveTokens } from "../core/session/saveTokens.js";
 
 // Mock fetch globally
 global.fetch = vi.fn();
+
+// Mock saveTokens
+vi.mock("../core/session/saveTokens.js", () => ({
+  saveTokens: vi.fn(),
+}));
 
 describe("BabyClara Resolvers & Service", () => {
   beforeEach(() => {
@@ -62,6 +68,10 @@ describe("BabyClara Resolvers & Service", () => {
         }),
       );
       expect(result).toEqual(mockResponse.data.signup);
+      expect(saveTokens).toHaveBeenCalledWith({
+        accessToken: "fake-jwt-token",
+        refreshToken: "fake-refresh-token",
+      });
     });
 
     it("should include authorization header if token is in context", async () => {
@@ -117,6 +127,10 @@ describe("BabyClara Resolvers & Service", () => {
         }),
       );
       expect(result).toEqual(mockResponse.data.signin);
+      expect(saveTokens).toHaveBeenCalledWith({
+        accessToken: "fake-jwt-token",
+        refreshToken: "fake-refresh-token",
+      });
     });
   });
 
@@ -154,6 +168,10 @@ describe("BabyClara Resolvers & Service", () => {
         }),
       );
       expect(result).toEqual(mockResponse.data.refreshToken);
+      expect(saveTokens).toHaveBeenCalledWith({
+        accessToken: "new-access-token",
+        refreshToken: "new-refresh-token",
+      });
     });
   });
 
