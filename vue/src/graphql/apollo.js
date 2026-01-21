@@ -3,10 +3,15 @@ import {
   InMemoryCache,
   HttpLink,
   split,
-} from "@apollo/client/core";
+  ApolloError,
+  isApolloError,
+} from "@apollo/client";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
+
+// Export these for use in other files if needed
+export { ApolloError, isApolloError };
 
 const httpLink = new HttpLink({
   uri: "/graphql",

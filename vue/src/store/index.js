@@ -90,6 +90,10 @@ export const useStore = defineStore("store", () => {
     if (app.isInitialized) return;
 
     onRuntimeResult((res) => {
+      if (!res?.data?.runtimeState) {
+        console.warn("⚠️ GraphQL runtime state response missing data:", res);
+        return;
+      }
       const state = res.data.runtimeState;
       app.isAuthenticated = state.authenticated;
       user.data = state.user;
